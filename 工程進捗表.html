@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工程進捗表</title>
+    <style>
+        /* 全体のスタイル */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        /* タブナビゲーション */
+        .tab {
+            overflow: hidden;
+            background-color: #333;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            color: white;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        /* タブコンテンツ */
+        .tabcontent {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid #ccc;
+            background-color: white;
+        }
+
+        /* テーブルのスタイル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* 棒グラフ用スタイル */
+        .bar {
+            height: 20px;
+            color: black;
+            text-align: right;
+            padding-right: 5px;
+            box-sizing: border-box;
+            background-color: lightblue; /* 初期色 */
+            border-radius: 5px; /* 角を丸く */
+        }
+        .bar.complete {
+            background-color: lightblue; /* 100%未満の色 */
+        }
+        .bar.full {
+            background-color: blue; /* 100%の色 */
+        }
+
+        /* スマートフォン用のスタイル */
+        @media only screen and (max-width: 600px) {
+            .tab button {
+                font-size: 14px;
+                padding: 10px;
+                width: 50%; /* ボタン幅を2等分 */
+            }
+
+            th, td {
+                font-size: 14px; /* テーブル内の文字サイズを小さくする */
+            }
+
+            table {
+                display: block;
+                overflow-x: auto; /* 横スクロールを許可 */
+                white-space: nowrap; /* テーブルが狭いときに折り返しを防ぐ */
+            }
+
+            /* フォームの入力フィールドの幅を100%に */
+            form label {
+                display: block;
+                margin: 10px 0;
+            }
+            form input, form select {
+                width: 100%;
+                padding: 8px;
+                font-size: 16px;
+            }
+
+            /* ボタンの幅をスマートフォンに対応 */
+            form button {
+                width: 100%;
+                padding: 10px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1 style="text-align: center;">工程進捗表</h1>
+
+<!-- タブナビゲーション -->
+<div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'input')">入力画面</button>
+    <button class="tablinks" onclick="openTab(event, 'report')">帳票作成</button>
+    <button class="tablinks" onclick="openTab(event, 'summary')">総台数入力</button>
+</div>
+
+<!-- 入力画面タブ -->
+<div id="input" class="tabcontent">
+    <h2>入力画面</h2>
+
+    <form id="productionForm">
+        <label>日付: <input type="date" id="productionDate" required /></label><br/>
+        <label>工事名: 
+            <select id="constructionName" required>
+                <option value="東日本リネン">東日本リネン</option>
+                <option value="福山通運">福山通運</option>
+                <option value="野沢会館">野沢会館</option>
+            </select>
+        </label><br/>
+        <label>製品: 
+            <select id="productName" required>
+                <option value="柱">柱</option>
+                <option value="間柱">間柱</option>
+                <option value="大梁">大梁</option>
+                <option value="小梁">小梁</option>
+                <option value="ブレース">ブレース</option>
+                <option value="ブラケット">ブラケット</option>
+            </select>
+        </label><br/>
+        <label>工程: 
+            <select id="process" required>
+                <option value="一次加工">一次加工</option>
+                <option value="サイコロ">サイコロ</option>
+                <option value="仕口">仕口</option>
+                <option value="組立">組立</option>
+                <option value="溶接完了">溶接完了</option>
+                <option value="仕上げ">仕上げ</option>
+            </select>
+        </label><br/>
+        <label>完了台数: <input type="number" id="quantity" required /></label><br/>
+
+        <button type="submit">追加</button>
+    </form>
+
+    <table id="productionTable">
+        <thead>
+            <tr>
+                <th>日付</th>
+                <th>工事名</th>
+                <th>製品</th>
+                <th>工程</th>
+                <th>完了台数</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- 帳票タブ -->
+<div id="report" class="tabcontent">
+    <h2>帳票</h2>
+    <table id="reportTable">
+        <thead>
+            <tr>
+                <th>工事名</th>
+                <th>製品</th>
+                <th>工程</th>
+                <th>完了台数</th>
+                <th>総台数</th>
+                <th>進捗率</th>
+            </tr>
+        </thead>
+        <tbody id="reportTableBody">
+        </tbody>
+    </table>
+</div>
+
+<!-- 総台数入力タブ -->
+<div id="summary" class="tabcontent">
+    <h2>総台数入力</h2>
+
+    <form id="summaryForm">
+        <label>工事名:
+            <select id="summaryConstructionName" required>
+                <option value="東日本リネン">東日本リネン</option>
+                <option value="福山通運">福山通運</option>
+                <option value="野沢会館">野沢会館</option>
+            </select>
+        </label><br/>
+        <label>製品:
+            <select id="summaryProductName" required>
+                <option value="柱">柱</option>
+                <option value="間柱">間柱</option>
+                <option value="大梁">大梁</option>
+                <option value="小梁">小梁</option>
+                <option value="ブレース">ブレース</option>
+                <option value="ブラケット">ブラケット</option>
+            </select>
+        </label><br/>
+        <label>工程:
+            <select id="summaryProcess" required>
+                <option value="一次加工">一次加工</option>
+                <option value="サイコロ">サイコロ</option>
+                <option value="仕口">仕口</option>
+                <option value="組立">組立</option>
+                <option value="溶接完了">溶接完了</option>
+                <option value="仕上げ">仕上げ</option>
+            </select>
+        </label><br/>
+        <label>総台数: <input type="number" id="summaryQuantity" required /></label><br/>
+        <button type="submit">保存</button>
+    </form>
+
+    <table id="summaryTable">
+        <thead>
+            <tr>
+                <th>工事名</th>
+                <th>製品</th>
+                <th>工程</th>
+                <th>総台数</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="summaryTableBody">
+        </tbody>
+    </table>
+</div>
+
+<script>
+let fixedDate = null; // 日付を保存する変数
+
+function openTab(evt, tabName) {
+    // タブを非表示にする
+    const tabcontents = document.getElementsByClassName('tabcontent');
+    for (let i = 0; i < tabcontents.length; i++) {
+        tabcontents[i].style.display = 'none';
+    }
+
+    // タブボタンからアクティブクラスを削除
+    const tablinks = document.getElementsByClassName('tablinks');
+    for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(' active', '');
+    }
+
+    // 選択されたタブを表示し、ボタンにアクティブクラスを追加
+    document.getElementById(tabName).style.display = 'block';
+    evt.currentTarget.className += ' active';
+}
+
+// 入力画面タブのフォーム処理
+document.getElementById('productionForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    // 日付が設定されていない場合、現在の日付を設定
+    if (!fixedDate) {
+        fixedDate = document.getElementById('productionDate').value;
+    }
+
+    const date = fixedDate;
+    const constructionName = document.getElementById('constructionName').value;
+    const productName = document.getElementById('productName').value;
+    const process = document.getElementById('process').value;
+    const quantity = document.getElementById('quantity').value;
+
+    const table = document.getElementById('productionTable').getElementsByTagName('tbody')[0];
+    const newRow = table.insertRow();
+    newRow.innerHTML = `
+        <td>${date}</td>
+        <td>${constructionName}</td>
+        <td>${productName}</td>
+        <td>${process}</td>
+        <td>${quantity}</td>
+        <td><button onclick="deleteRow(this)">削除</button></td>
+    `;
+
+    // フォームをリセット
+    document.getElementById('productionForm').reset();
+    updateAllTables(); // データ追加後に帳票を更新
+});
+
+function deleteRow(button) {
+    const row = button.parentElement.parentElement;
+    const cells = row.cells;
+    const key = `${cells[1].innerText}-${cells[2].innerText}-${cells[3].innerText}-${cells[0].innerText}`;
+    
+    row.parentElement.removeChild(row);
+    removeFromReportTable(key); // 帳票作成タブの該当行を削除
+}
+
+// 総台数入力タブのフォーム処理
+document.getElementById('summaryForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const constructionName = document.getElementById('summaryConstructionName').value;
+    const productName = document.getElementById('summaryProductName').value;
+    const process = document.getElementById('summaryProcess').value;
+    const quantity = document.getElementById('summaryQuantity').value;
+
+    const table = document.getElementById('summaryTable').getElementsByTagName('tbody')[0];
+    const newRow = table.insertRow();
+    newRow.innerHTML = `
+        <td>${constructionName}</td>
+        <td>${productName}</td>
+        <td>${process}</td>
+        <td>${quantity}</td>
+        <td><button onclick="deleteSummaryRow(this)">削除</button></td>
+    `;
+
+    // フォームをリセット
+    document.getElementById('summaryForm').reset();
+    updateAllTables(); // データ追加後に帳票を更新
+});
+
+function deleteSummaryRow(button) {
+    const row = button.parentElement.parentElement;
+    const cells = row.cells;
+    const key = `${cells[0].innerText}-${cells[1].innerText}-${cells[2].innerText}`;
+    
+    row.parentElement.removeChild(row);
+    removeFromReportTable(key); // 帳票作成タブの該当行を削除
+}
+
+// 帳票作成タブの更新処理
+function updateReportTable() {
+    const productionTable = document.getElementById('productionTable').getElementsByTagName('tbody')[0];
+    const summaryTable = document.getElementById('summaryTable').getElementsByTagName('tbody')[0];
+    
+    const reportTableBody = document.getElementById('reportTableBody');
+    reportTableBody.innerHTML = '';
+
+    const summaryData = {};
+    for (let i = 0; i < summaryTable.rows.length; i++) {
+        const cells = summaryTable.rows[i].cells;
+        const key = `${cells[0].innerText}-${cells[1].innerText}-${cells[2].innerText}`;
+        summaryData[key] = parseInt(cells[3].innerText);
+    }
+
+    const productionData = {};
+    for (let i = 0; i < productionTable.rows.length; i++) {
+        const cells = productionTable.rows[i].cells;
+        const key = `${cells[1].innerText}-${cells[2].innerText}-${cells[3].innerText}`;
+        if (!productionData[key]) {
+            productionData[key] = 0;
+        }
+        productionData[key] += parseInt(cells[4].innerText);
+    }
+
+    for (const key in productionData) {
+        const [constructionName, productName, process] = key.split('-');
+        const completed = productionData[key];
+        const total = summaryData[key] || 0;
+        const progressRate = total > 0 ? ((completed / total) * 100).toFixed(2) : 0;
+        const progressRateText = progressRate + '%';
+        const progressBarClass = progressRate >= 100 ? 'full' : 'complete';
+        const progressBar = `<div class="bar ${progressBarClass}" style="width: ${progressRate}%;">${progressRateText}</div>`;
+
+        reportTableBody.innerHTML += `
+            <tr>
+                <td>${constructionName}</td>
+                <td>${productName}</td>
+                <td>${process}</td>
+                <td>${completed}</td>
+                <td>${total}</td>
+                <td>${progressBar}</td>
+            </tr>
+        `;
+    }
+}
+
+// 帳票作成タブから該当行を削除する処理
+function removeFromReportTable(key) {
+    const reportTableBody = document.getElementById('reportTableBody');
+    const rows = reportTableBody.getElementsByTagName('tr');
+
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        const rowKey = `${cells[0].innerText}-${cells[1].innerText}-${cells[2].innerText}`;
+
+        if (rowKey === key) {
+            reportTableBody.removeChild(rows[i]);
+            break;
+        }
+    }
+}
+
+// 入力画面または総台数入力タブの内容が更新されるたびに帳票タブを更新
+function updateAllTables() {
+    updateReportTable();
+}
+
+// 各タブのフォームに変更があった場合に帳票タブを更新
+document.getElementById('productionForm').addEventListener('submit', updateAllTables);
+document.getElementById('summaryForm').addEventListener('submit', updateAllTables);
+
+document.getElementsByClassName('tablinks')[0].click(); // 初期表示
+</script>
+
+</body>
+</html>
